@@ -1,0 +1,5 @@
+.env
+Resume-RAG/.env
+venv/
+__pycache__/
+vector_db/
