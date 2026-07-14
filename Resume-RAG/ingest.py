@@ -1,6 +1,6 @@
 import os
 import pickle
-import numpy as np
+import numpy as np 
 import faiss
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
