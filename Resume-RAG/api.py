@@ -3,6 +3,8 @@ from pathlib import Path
 import os
 import re
 
+from ingest import ingest_resumes
+
 app = FastAPI(title="Resume Upload API")
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -28,6 +30,18 @@ def list_resume_files() -> list[str]:
 @app.get("/resumes/")
 def get_resumes():
     return {"resumes": list_resume_files()}
+
+
+@app.post("/rebuild")
+@app.post("/rebuild/")
+@app.get("/rebuild")
+@app.get("/rebuild/")
+def rebuild_index():
+    try:
+        ingest_resumes()
+        return {"status": "success", "message": "Resume vector database rebuilt."}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.post("/upload-resume")

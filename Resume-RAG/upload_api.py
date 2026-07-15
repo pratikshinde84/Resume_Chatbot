@@ -95,7 +95,8 @@ def query_resume():
         return jsonify({"error": str(exc)}), 500
 
 
-@app.route("/rebuild", methods=["POST"])
+@app.route("/rebuild", methods=["GET", "POST"])
+@app.route("/rebuild/", methods=["GET", "POST"])
 def rebuild_index():
     try:
         ingest_resumes()
