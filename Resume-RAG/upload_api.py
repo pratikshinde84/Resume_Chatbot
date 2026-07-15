@@ -78,15 +78,21 @@ def delete_resume(filename: str):
     return jsonify({"status": "success", "filename": secure_name, "message": "Resume deleted."}), 200
 
 
-@app.route("/query", methods=["POST"])
+@app.route("/query", methods=["GET", "POST"])
+@app.route("/query/", methods=["GET", "POST"])
 def query_resume():
-    payload = request.get_json(silent=True)
-    if not payload or "query" not in payload:
-        return jsonify({"error": "JSON body must include a 'query' field."}), 400
+    if request.method == "GET":
+        query_text = (request.args.get("query") or "").strip()
+        if not query_text:
+            return jsonify({"error": "Query text cannot be empty."}), 400
+    else:
+        payload = request.get_json(silent=True)
+        if not payload or "query" not in payload:
+            return jsonify({"error": "JSON body must include a 'query' field."}), 400
 
-    query_text = payload["query"].strip()
-    if not query_text:
-        return jsonify({"error": "Query text cannot be empty."}), 400
+        query_text = payload["query"].strip()
+        if not query_text:
+            return jsonify({"error": "Query text cannot be empty."}), 400
 
     try:
         answer, sources = query_rag(query_text)

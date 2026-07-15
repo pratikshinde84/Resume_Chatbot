@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from pathlib import Path
 from pydantic import BaseModel
 import os
@@ -50,8 +50,23 @@ def delete_resume(filename: str):
     return {"status": "success", "filename": safe_name, "message": "Resume deleted."}
 
 
+@app.get("/query")
+@app.get("/query/")
+def query_resume_get(query: str = Query(default="", min_length=1)):
+    query_text = query.strip()
+    if not query_text:
+        raise HTTPException(status_code=400, detail="Query text cannot be empty.")
+
+    try:
+        from rag import query_rag
+        answer, sources = query_rag(query_text)
+        return {"answer": answer, "sources": sources}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @app.post("/query")
-def query_resume(payload: QueryRequest):
+def query_resume_post(payload: QueryRequest):
     query_text = payload.query.strip()
     if not query_text:
         raise HTTPException(status_code=400, detail="Query text cannot be empty.")
@@ -100,5 +115,6 @@ async def upload_resume(file: UploadFile = File(...)):
 
 
 @app.get("/")
+@app.head("/")
 def read_root():
     return {"message": "Resume Upload API is running. POST a PDF to /upload-resume."}
