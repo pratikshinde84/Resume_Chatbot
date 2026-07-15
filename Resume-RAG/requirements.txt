@@ -5,3 +5,6 @@ pypdf
 faiss-cpu
 reportlab
 python-dotenv
+flask
+fastapi
+uvicorn[standard]

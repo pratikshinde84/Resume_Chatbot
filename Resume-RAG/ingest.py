@@ -13,7 +13,7 @@ load_dotenv()
 RESUMES_DIR = os.path.join(os.path.dirname(__file__), "resumes")
 VECTOR_DB_DIR = os.path.join(os.path.dirname(__file__), "vector_db")
 DB_FILE_PATH = os.path.join(VECTOR_DB_DIR, "faiss_index.pkl")
-EMBED_MODEL = "all-MiniLM-L6-v2"  # Free, lightweight local embedding model
+EMBED_MODEL = "all-MiniLM-L6-v2"
 
 def ingest_resumes():
     print("Starting resume ingestion...")
