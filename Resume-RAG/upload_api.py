@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from ingest import ingest_resumes
 from rag import query_rag
 
-app = Flask(__name__)
+app = Flask(__name__) 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "resumes")
