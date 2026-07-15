@@ -58,6 +58,7 @@ def upload_resume():
 
 
 @app.route("/resumes", methods=["GET"])
+@app.route("/resumes/", methods=["GET"])
 def get_resumes():
     resumes = list_resume_files()
     return jsonify({"resumes": resumes}), 200

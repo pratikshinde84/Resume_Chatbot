@@ -18,6 +18,18 @@ def sanitize_filename(filename: str) -> str:
     return safe_name
 
 
+def list_resume_files() -> list[str]:
+    if not RESUMES_DIR.exists():
+        return []
+    return sorted([f.name for f in RESUMES_DIR.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"])
+
+
+@app.get("/resumes")
+@app.get("/resumes/")
+def get_resumes():
+    return {"resumes": list_resume_files()}
+
+
 @app.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
