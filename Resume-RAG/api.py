@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 import re
 
-from ingest import ingest_resumes
+
 
 app = FastAPI(title="Resume Upload API")
 
@@ -38,6 +38,7 @@ def get_resumes():
 @app.get("/rebuild/")
 def rebuild_index():
     try:
+        from ingest import ingest_resumes
         ingest_resumes()
         return {"status": "success", "message": "Resume vector database rebuilt."}
     except Exception as exc:
