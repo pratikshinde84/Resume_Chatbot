@@ -82,12 +82,14 @@ streamlit run app.py
 This will open the application in your default web browser (typically at `http://localhost:8501`).
 
 ### 6. Run the Resume Upload API
-Start the FastAPI server for PDF uploads:
+For local development, start the FastAPI server for PDF uploads:
 ```bash
 uvicorn api:app --reload --host 127.0.0.1 --port 8000
 ```
-Upload a PDF to:
-- `POST http://127.0.0.1:8000/upload-resume`
+For the deployed backend, use:
+- `POST https://resume-chatbot-1-eutd.onrender.com/upload-resume`
+- `GET https://resume-chatbot-1-eutd.onrender.com/resumes`
+- `POST https://resume-chatbot-1-eutd.onrender.com/rebuild`
 
 ---
 

@@ -95,6 +95,8 @@ app/src/main/java/com/example/resumerag/
 ## 5. Sample Retrofit API Interface
 
 ```kotlin
+const val BASE_URL = "https://resume-chatbot-1-eutd.onrender.com"
+
 interface ResumeApiService {
     @Multipart
     @POST("/upload")
@@ -130,7 +132,7 @@ interface ResumeApiService {
 
 ## 7. Startup and Next Steps
 
-1. Build the Flask backend and verify it runs on `http://<host>:8000`
+1. Use the deployed backend at `https://resume-chatbot-1-eutd.onrender.com` or run the Flask/FastAPI backend locally on `http://<host>:8000`
 2. Create the Android app skeleton in Android Studio
 3. Implement the Retrofit client using the API endpoints above
 4. Add file upload and deletion logic in `ResumeViewModel`

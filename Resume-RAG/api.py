@@ -1,8 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pathlib import Path
+from pydantic import BaseModel
 import os
 import re
-
 
 
 app = FastAPI(title="Resume Upload API")
@@ -26,10 +26,42 @@ def list_resume_files() -> list[str]:
     return sorted([f.name for f in RESUMES_DIR.iterdir() if f.is_file() and f.suffix.lower() == ".pdf"])
 
 
+class QueryRequest(BaseModel):
+    query: str
+
+
 @app.get("/resumes")
 @app.get("/resumes/")
 def get_resumes():
     return {"resumes": list_resume_files()}
+
+
+@app.delete("/resumes/{filename}")
+def delete_resume(filename: str):
+    safe_name = os.path.basename(filename)
+    if safe_name != filename:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    save_path = RESUMES_DIR / safe_name
+    if not save_path.exists():
+        raise HTTPException(status_code=404, detail="Resume not found.")
+
+    save_path.unlink()
+    return {"status": "success", "filename": safe_name, "message": "Resume deleted."}
+
+
+@app.post("/query")
+def query_resume(payload: QueryRequest):
+    query_text = payload.query.strip()
+    if not query_text:
+        raise HTTPException(status_code=400, detail="Query text cannot be empty.")
+
+    try:
+        from rag import query_rag
+        answer, sources = query_rag(query_text)
+        return {"answer": answer, "sources": sources}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.post("/rebuild")
