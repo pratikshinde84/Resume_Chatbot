@@ -1,5 +1,6 @@
 import os
 import pickle
+from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
 import faiss
@@ -13,8 +14,13 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 VECTOR_DB_DIR = os.path.join(os.path.dirname(__file__), "vector_db")
 DB_FILE_PATH = os.path.join(VECTOR_DB_DIR, "faiss_index.pkl")
-EMBED_MODEL = "all-MiniLM-L6-v2"
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "all-MiniLM-L6-v2")
 LLM_MODEL = "llama-3.1-8b-instant"
+
+
+@lru_cache(maxsize=1)
+def get_embed_model() -> SentenceTransformer:
+    return SentenceTransformer(EMBED_MODEL, device="cpu")
 
 
 def is_db_initialized() -> bool:
@@ -44,8 +50,8 @@ def query_rag(query_text: str, top_k: int = 4) -> Tuple[str, List[Dict[str, Any]
     """Retrieve relevant resume chunks and use Groq to answer the query."""
     index, chunks, metadata = load_vector_db()
 
-    model = SentenceTransformer(EMBED_MODEL)
-    query_emb = model.encode([query_text])[0]
+    model = get_embed_model()
+    query_emb = model.encode([query_text], convert_to_numpy=True, normalize_embeddings=True)[0]
     query_emb = np.array([query_emb], dtype="float32")
     faiss.normalize_L2(query_emb)
 

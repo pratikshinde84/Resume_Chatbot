@@ -1,6 +1,8 @@
 import os
 import pickle
-import numpy as np 
+from functools import lru_cache
+
+import numpy as np
 import faiss
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
@@ -13,7 +15,16 @@ load_dotenv()
 RESUMES_DIR = os.path.join(os.path.dirname(__file__), "resumes")
 VECTOR_DB_DIR = os.path.join(os.path.dirname(__file__), "vector_db")
 DB_FILE_PATH = os.path.join(VECTOR_DB_DIR, "faiss_index.pkl")
-EMBED_MODEL = "all-MiniLM-L6-v2"
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "all-MiniLM-L6-v2")
+EMBED_BATCH_SIZE = int(os.environ.get("EMBED_BATCH_SIZE", "8"))
+MAX_CHUNK_SIZE = int(os.environ.get("MAX_CHUNK_SIZE", "700"))
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "120"))
+
+
+@lru_cache(maxsize=1)
+def get_embed_model() -> SentenceTransformer:
+    return SentenceTransformer(EMBED_MODEL, device="cpu")
+
 
 def ingest_resumes():
     print("Starting resume ingestion...")
@@ -43,7 +54,7 @@ def ingest_resumes():
         
         try:
             text = extract_text_from_pdf(pdf_path)
-            chunks = recursive_split_text(text, max_chunk_size=800, overlap=150)
+            chunks = recursive_split_text(text, max_chunk_size=MAX_CHUNK_SIZE, overlap=CHUNK_OVERLAP)
             print(f"  - Extracted {len(text)} characters, split into {len(chunks)} chunks.")
             
             for idx, chunk in enumerate(chunks):
@@ -60,25 +71,42 @@ def ingest_resumes():
         print("No text chunks generated. Ingestion aborted.")
         return
 
-    # 4. Generate Embeddings using sentence-transformers (FREE, local, no API calls)
-    print(f"Generating embeddings using {EMBED_MODEL}...")
+    # 4. Generate embeddings in small batches to keep memory usage low on Render
+    print(f"Generating embeddings using {EMBED_MODEL} in batches of {EMBED_BATCH_SIZE}...")
     try:
-        model = SentenceTransformer(EMBED_MODEL)
-        embeddings_list = model.encode(all_chunks, show_progress_bar=True)
-        print(f"Generated {len(embeddings_list)} embeddings successfully.")
+        model = get_embed_model()
+        index = None
+        batch_start = 0
+
+        while batch_start < len(all_chunks):
+            batch_end = min(batch_start + EMBED_BATCH_SIZE, len(all_chunks))
+            batch_chunks = all_chunks[batch_start:batch_end]
+            batch_embeddings = model.encode(
+                batch_chunks,
+                batch_size=EMBED_BATCH_SIZE,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+            )
+            batch_embeddings = np.asarray(batch_embeddings, dtype="float32")
+            if batch_embeddings.ndim == 1:
+                batch_embeddings = batch_embeddings.reshape(1, -1)
+
+            if index is None:
+                index = faiss.IndexFlatIP(batch_embeddings.shape[1])
+
+            embeddings_normalized = batch_embeddings / (
+                np.linalg.norm(batch_embeddings, axis=1, keepdims=True) + 1e-9
+            )
+            faiss.normalize_L2(embeddings_normalized)
+            index.add(embeddings_normalized.astype("float32"))
+            batch_start = batch_end
+
+        print(f"Generated {len(all_chunks)} embeddings successfully.")
     except Exception as e:
         print(f"Error during embedding generation: {e}")
         return
-    
-    # 5. Build FAISS index
-    embedding_dim = embeddings_list.shape[1]
-    index = faiss.IndexFlatIP(embedding_dim)  # Inner Product for cosine similarity
-    
-    # Normalize embeddings for cosine similarity
-    embeddings_normalized = embeddings_list / (np.linalg.norm(embeddings_list, axis=1, keepdims=True) + 1e-9)
-    faiss.normalize_L2(embeddings_normalized)
-    index.add(embeddings_normalized.astype("float32"))
-    
+
     print(f"FAISS index created with {index.ntotal} vectors.")
     
     # 6. Save to pickle
