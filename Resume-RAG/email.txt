@@ -1,0 +1,25 @@
+subject - Requesting for referrel in your company.
+
+Dear Sir/Madam,
+
+I am writing this letter to request an internship for the android developer role
+that TCS posted in last weak. I think I could be the best candidate for this role.
+
+As I have completed my 3 months internship in android developer role where i have worked on 
+ - Java
+ - android
+ - XML
+ - Postman
+ - Firebase
+
+My projects also include Resume analyzer built using rag and langchain with vectordb.
+Another one is a virtual server application that allowes you to remotely control your pc from anywhere in the world 
+using your mobile app.
+
+I have also attached my resume copy with this email. Please do check it once. Hoping positive response from your side.
+Thanking you.
+
+Yours sincerely,
+Pratik Shinde
+9284846391
+pratik216029@gmail.com
